@@ -1,0 +1,11 @@
+##Sign Censor Config##
+Banned-Words:
+- Dog
+- Cat
+Auto-Kick: false
+Replacements:
+    Line-One: 'This'
+    Line-Two: 'is'
+    Line-Three: 'default'
+    Line-Four: 'yay'
+Censor-Message: 'You placed a sign with banned words on it!'
