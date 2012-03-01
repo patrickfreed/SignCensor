@@ -1,3 +1,4 @@
 name: SignCensor
+author: patrickfreed
 main: me.patrickfreed.signcensor.SignCensor
-version: 0.1
+version: 0.2
