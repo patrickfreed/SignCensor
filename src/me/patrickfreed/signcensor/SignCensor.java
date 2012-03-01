@@ -1,27 +1,30 @@
 package me.patrickfreed.signcensor;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
-import org.bukkit.event.Event;
-import org.bukkit.event.Event.Priority;
-import org.bukkit.permissions.Permission;
+import java.util.List;
+
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.config.Configuration;
 
 /**
  * @author PatrickFreed
+ * @version 1.1
  */
 
 public class SignCensor extends JavaPlugin {
-	public Configuration config;
+	public YamlConfiguration config;
 	public static List<String>words;
 	public static String CensorMessage;
 	public static boolean isKickMode; 
 	public static String[] Line = new String[4];
+	public static boolean isLoggingAll;
+	public static boolean isLoggingCensors;
 
 	@Override
 	public void onDisable() {
@@ -32,20 +35,41 @@ public class SignCensor extends JavaPlugin {
 	public void onEnable() {
 		System.out.println("[" + this.getDescription().getName() + "] Enabled!");
 		PluginManager pm = getServer().getPluginManager();
-		pm.addPermission(new Permission("SignCensor.exempt"));
-		pm.registerEvent(Event.Type.SIGN_CHANGE, new SignCensorSignListener(),Priority.Normal, this);
+		pm.registerEvents(new SignCensorSignListener(),this);
+		
 		File conf = makeConfig(new File(getDataFolder(), "config.yml"));
+		
 		if (conf.exists()) {
-			config = getConfiguration();
-			List<String>words = config.getStringList("Banned-Words", null);		
-			SignCensor.words = words;
+			config = YamlConfiguration.loadConfiguration(conf);
+			try {
+				config.load(conf);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (InvalidConfigurationException e) {
+				e.printStackTrace();
+			}
+			
+			words = config.getStringList("Banned-Words");		
 			CensorMessage = config.getString("Censor-Message", "You put a banned word on that sign! Censoring...");
 			isKickMode = config.getBoolean("Auto-Kick", false);
+			
+			isLoggingAll = false;
+			isLoggingCensors = false;
+			
 			Line[0] = config.getString("Replacements.Line-One", "Censored!");
 			Line[1] = config.getString("Replacements.Line-Two", "Censored!");
 			Line[2] = config.getString("Replacements.Line-Three", "Censored!");
 			Line[3] = config.getString("Replacements.Line-Four", "Censored!");
+			
 			System.out.println("[" + this.getDescription().getName() + "] Config loaded successfully!");
+			
+			try {
+				config.save(conf);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		else {
 			System.out.println("Config loading failed, disabling...");
@@ -58,8 +82,7 @@ public class SignCensor extends JavaPlugin {
 		if (!file.exists()) {
 			System.out.println("[" + this.getDescription().getName() + "] Generating config...");
 			new File(file.getParent()).mkdirs();
-			InputStream in = SignCensor.class
-			.getResourceAsStream("/resources/" + file.getName());
+			InputStream in = SignCensor.class.getResourceAsStream("/resources/" + file.getName());
 			if (in != null) {
 				FileOutputStream out = null;
 				try {
